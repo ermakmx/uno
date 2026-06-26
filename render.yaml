@@ -4,8 +4,8 @@ services:
     env: node
     region: ohio
     plan: free
-    buildCommand: pnpm install && pnpm --filter @uno/shared build && pnpm --filter @uno/server build && pnpm --filter @uno/client build
-    startCommand: pnpm --filter @uno/server start
+    buildCommand: corepack enable && pnpm install && pnpm --filter @uno/shared build && pnpm --filter @uno/server build && pnpm --filter @uno/client build
+    startCommand: node packages/server/dist/index.js
     healthCheckPath: /
     envVars:
       - key: NODE_VERSION
