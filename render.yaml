@@ -23,4 +23,4 @@ services:
         fromService:
           name: uno-server
           type: web
-          property: hostOrUrl
+          property: host
