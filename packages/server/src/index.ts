@@ -64,6 +64,14 @@ io.on('connection', (socket) => {
     const name = validateName(payload?.name) ?? 'Player'
     const isPublic = payload?.isPublic === true
     const room = roomManager.createRoom(isPublic)
+    room.onStateChange = (code) => {
+      const r = roomManager.getRoom(code)
+      if (!r) return
+      broadcastGameState(code, r)
+      if (r.state.phase === 'finished') {
+        io.to(code).emit('game:ended', { winnerId: r.state.winnerId, winnerName: r.state.winnerName })
+      }
+    }
     room.addPlayer(socket.id, name)
     socket.join(room.code)
     socket.data.roomCode = room.code

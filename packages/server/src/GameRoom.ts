@@ -26,6 +26,11 @@ export class GameRoom {
   code: string
   isPublic: boolean
   state: GameState
+  onStateChange?: (code: string) => void
+
+  private turnTimer: ReturnType<typeof setTimeout> | null = null
+  private hasDrawnThisTurn = false
+  turnStartedAt: number = Date.now()
 
   constructor(code: string, isPublic = false) {
     this.code = code
@@ -40,6 +45,43 @@ export class GameRoom {
       pendingDraws: 0,
       phase: 'waiting',
     }
+  }
+
+  private startTurnTimer(hasDrawn = false) {
+    this.clearTurnTimer()
+    this.hasDrawnThisTurn = hasDrawn
+    this.turnStartedAt = Date.now()
+    this.turnTimer = setTimeout(() => this.handleTurnTimeout(), 5000)
+  }
+
+  private clearTurnTimer() {
+    if (this.turnTimer !== null) {
+      clearTimeout(this.turnTimer)
+      this.turnTimer = null
+    }
+  }
+
+  private handleTurnTimeout() {
+    if (this.state.phase !== 'playing') return
+    const playerId = this.state.players[this.state.currentPlayerIndex]?.id
+    if (!playerId) return
+
+    if (!this.hasDrawnThisTurn) {
+      const result = this.drawCard(playerId)
+      if (!result.success) return
+      if (this.state.phase === 'finished') {
+        this.onStateChange?.(this.code)
+        return
+      }
+      const currentPlayer = this.state.players[this.state.currentPlayerIndex]
+      if (currentPlayer?.id === playerId) {
+        this.advanceTurn()
+      }
+    } else {
+      this.passDraw(playerId)
+    }
+
+    this.onStateChange?.(this.code)
   }
 
   addPlayer(id: string, name: string) {
@@ -107,6 +149,8 @@ export class GameRoom {
       p.saidUno = false
     }
 
+    this.startTurnTimer()
+
     const firstPlayer = this.state.players[0]
     const payload: GameStartedPayload = {
       hand: [...firstPlayer.hand],
@@ -116,6 +160,7 @@ export class GameRoom {
       direction: 1,
       players: this.getPublicPlayers(),
       deckCount: this.state.deck.length,
+      turnStartedAt: this.turnStartedAt,
     }
     return { success: true, payload }
   }
@@ -155,10 +200,12 @@ export class GameRoom {
 
     if (player.hand.length === 0) {
       this.state.phase = 'finished'
+      this.clearTurnTimer()
       this.state.winnerId = playerId
       return { success: true, gameEnded: true, winnerId: playerId, winnerName: player.name }
     }
 
+    this.startTurnTimer()
     return { success: true, gameEnded: false }
   }
 
@@ -208,6 +255,8 @@ export class GameRoom {
     if (canPlayWithoutEffect(cardArr, topCard, activeColor)) {
       // La carta robada es jugable — el jugador elige (jugar o Pasar),
       // por eso no avanzamos el turno.
+      this.hasDrawnThisTurn = true
+      this.startTurnTimer(true)
       return { success: true, gameEnded: false }
     }
 
@@ -246,6 +295,7 @@ export class GameRoom {
   private advanceTurn() {
     const playerCount = this.state.players.length
     this.state.currentPlayerIndex = ((this.state.currentPlayerIndex + this.state.direction) % playerCount + playerCount) % playerCount
+    this.startTurnTimer()
   }
 
   sayUno(playerId: string) {
@@ -294,6 +344,7 @@ export class GameRoom {
       pendingDraws: this.state.pendingDraws,
       winnerId: this.state.winnerId,
       deckCount: this.state.deck.length,
+      turnStartedAt: this.turnStartedAt,
     }
   }
 }

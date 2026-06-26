@@ -97,6 +97,7 @@ export type GameStartedPayload = {
   direction: Direction
   players: PlayerPublic[]
   deckCount: number
+  turnStartedAt: number
 }
 export type GameStatePayload = {
   hand: Card[]
@@ -109,6 +110,7 @@ export type GameStatePayload = {
   pendingDraws: number
   winnerId?: string
   deckCount: number
+  turnStartedAt: number
 }
 export type InvalidMovePayload = { reason: string }
 export type GameEndedPayload = { winnerId: string; winnerName: string }

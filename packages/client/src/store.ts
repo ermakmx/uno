@@ -39,6 +39,7 @@ type GameStore = {
   drawnCardThisTurn: boolean
   publicRooms: PublicRoomEntry[]
   deckCount: number
+  turnStartedAt: number
 
   setPlayerName: (name: string) => void
   createRoom: (isPublic?: boolean) => void
@@ -84,6 +85,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       pendingDraws: 0,
       drawnCardThisTurn: false,
       deckCount: data.deckCount,
+      turnStartedAt: data.turnStartedAt,
       error: null,
     })
   })
@@ -107,6 +109,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       handCounts: data.handCounts,
       pendingDraws: data.pendingDraws,
       deckCount: data.deckCount,
+      turnStartedAt: data.turnStartedAt,
       error: null,
       drawnCardThisTurn,
     })
@@ -156,6 +159,7 @@ export const useGameStore = create<GameStore>((set, get) => {
     drawnCardThisTurn: false,
     publicRooms: [],
     deckCount: 0,
+    turnStartedAt: 0,
 
     setPlayerName: (name) => set({ playerName: name }),
 
@@ -234,6 +238,7 @@ export const useGameStore = create<GameStore>((set, get) => {
         handCounts: {},
         pendingDraws: 0,
         deckCount: 0,
+        turnStartedAt: 0,
         winnerId: undefined,
         winnerName: undefined,
         error: null,
