@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useGameStore } from '../store'
 
 export default function PlayersBar() {
@@ -6,6 +7,7 @@ export default function PlayersBar() {
   const currentPlayerId = useGameStore(s => s.currentPlayerId)
   const handCounts = useGameStore(s => s.handCounts)
   const callOut = useGameStore(s => s.callOut)
+  const [pendingTarget, setPendingTarget] = useState<string | null>(null)
 
   return (
     <div className="fixed top-12 sm:top-16 right-2 sm:right-4 space-y-1.5 sm:space-y-2 z-30 max-w-[45vw] sm:max-w-none">
@@ -64,10 +66,21 @@ export default function PlayersBar() {
             {/* Call out button */}
             {canCallOut && (
               <button
-                className="px-2 py-0.5 rounded-md bg-red-600/80 hover:bg-red-600 text-[10px] font-bold transition"
-                onClick={() => callOut(p.id)}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition ${
+                  pendingTarget === p.id
+                    ? 'bg-red-400 cursor-wait'
+                    : 'bg-red-600/80 hover:bg-red-600'
+                }`}
+                onClick={() => {
+                  if (pendingTarget) return
+                  setPendingTarget(p.id)
+                  setTimeout(() => {
+                    callOut(p.id)
+                    setPendingTarget(null)
+                  }, 500)
+                }}
               >
-                ¡Pillo!
+                {pendingTarget === p.id ? '...' : 'UNO'}
               </button>
             )}
           </div>
