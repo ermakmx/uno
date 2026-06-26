@@ -1,4 +1,4 @@
-import { Card, Color } from './types'
+import { Card, Color } from './types.js'
 
 const PLAY_COLORS: Exclude<Color, Color.Wild>[] = [Color.Red, Color.Yellow, Color.Green, Color.Blue]
 

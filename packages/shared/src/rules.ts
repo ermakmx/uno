@@ -1,4 +1,4 @@
-import { Card, Color, GameState, Player, Direction } from './types'
+import { Card, Color, GameState, Player, Direction } from './types.js'
 
 export function canPlayCard(card: Card, topCard: Card, activeColor: Color, pendingDraws: number): boolean {
   if (pendingDraws > 0) return false

@@ -1,3 +1,3 @@
-export * from './types'
-export * from './deck'
-export * from './rules'
+export * from './types.js'
+export * from './deck.js'
+export * from './rules.js'
