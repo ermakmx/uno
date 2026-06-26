@@ -10,6 +10,7 @@ const PORT = process.env.PORT ?? 3000
 
 const app = express()
 app.use(cors())
+app.get('/', (_req, res) => res.send('ok'))
 
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
