@@ -20,6 +20,15 @@ beforeAll(async () => {
   ioServer.on('connection', (socket) => {
     socket.on('room:create', (playerName: string) => {
       const room = roomManager.createRoom()
+      room.turnTimeoutMs = 300_000
+      room.onStateChange = (code) => {
+        const r = roomManager.getRoom(code)
+        if (!r) return
+        broadcast(code, r)
+        if (r.state.phase === 'finished') {
+          ioServer.to(code).emit('game:ended', { winnerId: r.state.winnerId, winnerName: r.state.winnerName })
+        }
+      }
       room.addPlayer(socket.id, playerName ?? 'Player')
       socket.join(room.code)
       socket.data.roomCode = room.code
@@ -127,26 +136,33 @@ describe('full game flow', () => {
       })
 
     // Alice creates room
+    const rs1 = onEvent(p1, 'room:state')
     p1.emit('room:create', 'Alice')
     const created = await onEvent(p1, 'room:created')
     expect(created.code.length).toBe(6)
     const code = created.code
-    await onEvent(p1, 'room:state')
+    await rs1
 
     // Bob joins
+    const rs2 = onEvent(p2, 'room:state')
     p2.emit('room:join', { code, name: 'Bob' })
-    await onEvent(p2, 'room:state')
+    await rs2
 
     // Start game
+    const gs1 = onEvent(p1, 'game:state')
+    const gs2 = onEvent(p2, 'game:state')
+    const gstart = onEvent(p1, 'game:started')
     p1.emit('game:start')
-    await onEvent(p1, 'game:started')
-    await onEvent(p2, 'game:state')
+    await gstart
+    await gs1
+    await gs2
 
     // Simple alternating draw
     const maxTurns = 60
     for (let i = 0; i < maxTurns; i++) {
+      const p1gs = onEvent(p1, 'game:state')
       p1.emit('game:draw')
-      const s1 = await onEvent(p1, 'game:state')
+      const s1 = await p1gs
       if (s1.winnerId) { expect(s1.winnerId).toBe(p1.id); break }
 
       // p1 tries to play first matching card
@@ -155,21 +171,19 @@ describe('full game flow', () => {
       for (let j = 0; j < hand1.length; j++) {
         const c = hand1[j]
         if (c.color === s1.activeColor || c.color === 'wild') {
+          const p1pg = onEvent(p1, 'game:state')
           p1.emit('game:play', { cardIndex: j, chosenColor: c.color === 'wild' ? 'red' : undefined })
-          const r = await onEvent(p1, 'game:state')
+          const r = await p1pg
           if (r.winnerId) { played1 = true; break }
-          // Also consume p2's state from broadcast
-          if (states2.length > 0) states2.shift()
-          else { const t = setTimeout(() => {}, 100); p2.once('game:state', () => { clearTimeout(t) }) }
           played1 = true
           break
         }
       }
       if (played1) {
-        // p1 played, p2 receives state
-        // Now p2's turn
+        // p1 played, p2's turn
+        const p2dg = onEvent(p2, 'game:state')
         p2.emit('game:draw')
-        const s2 = await onEvent(p2, 'game:state')
+        const s2 = await p2dg
         if (s2.winnerId) { expect(s2.winnerId).toBe(p2.id); break }
 
         const hand2: any[] = s2.hand
@@ -177,35 +191,31 @@ describe('full game flow', () => {
         for (let j = 0; j < hand2.length; j++) {
           const c = hand2[j]
           if (c.color === s2.activeColor || c.color === 'wild') {
+            const p2pg = onEvent(p2, 'game:state')
             p2.emit('game:play', { cardIndex: j, chosenColor: c.color === 'wild' ? 'red' : undefined })
-            const r = await onEvent(p2, 'game:state')
+            const r = await p2pg
             if (r.winnerId) { played2 = true; break }
-            if (states1.length > 0) states1.shift()
-            else { const t = setTimeout(() => {}, 100); p1.once('game:state', () => { clearTimeout(t) }) }
             played2 = true
             break
           }
         }
         if (!played2) {
+          const p2pd = onEvent(p2, 'game:state')
           p2.emit('game:pass_draw')
-          await onEvent(p2, 'game:state')
-          if (states1.length > 0) states1.shift()
-          else { const t = setTimeout(() => {}, 100); p1.once('game:state', () => { clearTimeout(t) }) }
+          await p2pd
         }
         continue
       }
 
       // p1 couldn't play
+      const p1pd = onEvent(p1, 'game:state')
       p1.emit('game:pass_draw')
-      await onEvent(p1, 'game:state')
-
-      // Check p2's state from the broadcast
-      if (states2.length > 0) states2.shift()
-      else { const t = setTimeout(() => {}, 100); p2.once('game:state', () => { clearTimeout(t) }) }
+      await p1pd
 
       // p2's turn
+      const p2dg = onEvent(p2, 'game:state')
       p2.emit('game:draw')
-      const s2 = await onEvent(p2, 'game:state')
+      const s2 = await p2dg
       if (s2.winnerId) { expect(s2.winnerId).toBe(p2.id); break }
 
       const hand2: any[] = s2.hand
@@ -213,20 +223,18 @@ describe('full game flow', () => {
       for (let j = 0; j < hand2.length; j++) {
         const c = hand2[j]
         if (c.color === s2.activeColor || c.color === 'wild') {
+          const p2pg = onEvent(p2, 'game:state')
           p2.emit('game:play', { cardIndex: j, chosenColor: c.color === 'wild' ? 'red' : undefined })
-          const r = await onEvent(p2, 'game:state')
+          const r = await p2pg
           if (r.winnerId) { played2 = true; break }
-          if (states1.length > 0) states1.shift()
-          else { const t = setTimeout(() => {}, 100); p1.once('game:state', () => { clearTimeout(t) }) }
           played2 = true
           break
         }
       }
       if (!played2) {
+        const p2pd = onEvent(p2, 'game:state')
         p2.emit('game:pass_draw')
-        await onEvent(p2, 'game:state')
-        if (states1.length > 0) states1.shift()
-        else { const t = setTimeout(() => {}, 100); p1.once('game:state', () => { clearTimeout(t) }) }
+        await p2pd
       }
     }
 
