@@ -10,7 +10,7 @@ test('2 jugadores — partida visual', async ({ browser }) => {
   const contexts: BrowserContext[] = []
   const pages: Page[] = []
   for (let i = 0; i < PLAYER_COUNT; i++) {
-    const ctx = await browser.newContext({ viewport: { width: 480, height: 620 }, locale: 'es' })
+    const ctx = await browser.newContext({ viewport: null, locale: 'es' })
     contexts.push(ctx)
     pages.push(await ctx.newPage())
   }
