@@ -1,5 +1,7 @@
 import express from 'express'
 import { createServer } from 'node:http'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { Server } from 'socket.io'
 import cors from 'cors'
 import { Color } from '@uno/shared'
@@ -10,7 +12,15 @@ const PORT = process.env.PORT ?? 3000
 
 const app = express()
 app.use(cors())
-app.get('/', (_req, res) => res.send('ok'))
+
+// Serve the client built files in production (Render free plan = single service)
+const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'client', 'dist')
+app.use(express.static(distDir))
+
+// Fallback for SPA routing
+app.get('*', (_req, res) => {
+  res.sendFile(join(distDir, 'index.html'))
+})
 
 const httpServer = createServer(app)
 const io = new Server(httpServer, {

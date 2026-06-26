@@ -1,26 +1,12 @@
 services:
   - type: web
-    name: uno-server
-    runtime: node
-    repo: https://github.com/ermakmx/uno
-    branch: main
-    buildCommand: pnpm install && pnpm --filter @uno/shared build && pnpm --filter @uno/server build
+    name: uno
+    env: node
+    region: ohio
+    plan: free
+    buildCommand: pnpm install && pnpm --filter @uno/shared build && pnpm --filter @uno/server build && pnpm --filter @uno/client build
     startCommand: pnpm --filter @uno/server start
-    envVars:
-      - key: NODE_ENV
-        value: production
     healthCheckPath: /
-
-  - type: web
-    name: uno-client
-    runtime: static
-    repo: https://github.com/ermakmx/uno
-    branch: main
-    buildCommand: pnpm install && pnpm --filter @uno/shared build && pnpm --filter @uno/client build
-    staticPublishPath: packages/client/dist
     envVars:
-      - key: VITE_SERVER_URL
-        fromService:
-          name: uno-server
-          type: web
-          property: host
+      - key: NODE_VERSION
+        value: 20
