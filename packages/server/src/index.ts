@@ -69,7 +69,8 @@ io.on('connection', (socket) => {
       if (!r) return
       broadcastGameState(code, r)
       if (r.state.phase === 'finished') {
-        io.to(code).emit('game:ended', { winnerId: r.state.winnerId, winnerName: r.state.winnerName })
+        const winner = r.state.players.find(p => p.id === r.state.winnerId)
+        io.to(code).emit('game:ended', { winnerId: r.state.winnerId, winnerName: winner?.name ?? '' })
       }
     }
     room.addPlayer(socket.id, name)

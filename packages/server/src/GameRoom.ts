@@ -69,7 +69,7 @@ export class GameRoom {
     if (!this.hasDrawnThisTurn) {
       const result = this.drawCard(playerId)
       if (!result.success) return
-      if (this.state.phase === 'finished') {
+      if (result.gameEnded) {
         this.onStateChange?.(this.code)
         return
       }
