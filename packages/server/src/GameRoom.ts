@@ -27,7 +27,7 @@ export class GameRoom {
   isPublic: boolean
   state: GameState
   onStateChange?: (code: string) => void
-  turnTimeoutMs = 5000
+  turnTimeoutMs = 10000
 
   private turnTimer: ReturnType<typeof setTimeout> | null = null
   private hasDrawnThisTurn = false
