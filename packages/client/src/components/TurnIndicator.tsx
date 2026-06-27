@@ -13,17 +13,17 @@ export default function TurnIndicator() {
 
   const isMe = currentPlayerId === playerId
 
-  const [timeLeft, setTimeLeft] = useState(5)
+  const [timeLeft, setTimeLeft] = useState(10)
   const turnKey = `${currentPlayerId}-${turnStartedAt}`
 
   useEffect(() => {
     if (!isMe) {
-      setTimeLeft(5)
+      setTimeLeft(10)
       return
     }
     const update = () => {
       const elapsed = (Date.now() - turnStartedAt) / 1000
-      setTimeLeft(Math.max(0, 5 - elapsed))
+      setTimeLeft(Math.max(0, 10 - elapsed))
     }
     update()
     const interval = setInterval(update, 100)
@@ -69,7 +69,7 @@ export default function TurnIndicator() {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeDasharray={2 * Math.PI * 9}
-              strokeDashoffset={2 * Math.PI * 9 * (1 - timeLeft / 5)}
+              strokeDashoffset={2 * Math.PI * 9 * (1 - timeLeft / 10)}
               className="transition-all duration-100"
             />
           </svg>
