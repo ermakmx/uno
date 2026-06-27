@@ -197,7 +197,7 @@ export default function Game() {
                 key={`${card.kind}-${card.color}-${'value' in card ? card.value : ''}-${i}`}
                 card={card}
                 disabled={!playable}
-                className={`${sizeClass} ${anim} ${playable ? 'ring-2 ring-yellow-400/80 shadow-lg shadow-yellow-400/40' : ''}`}
+                className={`${sizeClass} ${anim} ${playable ? 'glow-card' : ''}`}
                 onDoubleClick={playable ? () => playCard(i) : undefined}
                 onMouseDown={playable ? (e) => onCardMouseDown(i, e) : undefined}
                 onTouchStart={playable ? (e) => onCardTouchStart(i, e) : undefined}
